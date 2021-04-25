@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,8 +30,15 @@ namespace setup
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            RunAdmin();
-            this.tabControl1.Region = new Region(new RectangleF(this.tabPage1.Left, this.tabPage1.Top, this.tabPage1.Width, this.tabPage1.Height));
+            try
+            {
+                RunAdmin();
+                this.tabControl1.Region = new Region(new RectangleF(this.tabPage1.Left, this.tabPage1.Top, this.tabPage1.Width, this.tabPage1.Height));
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("初始化安装程序失败");
+            }
         }
 
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
@@ -70,43 +78,78 @@ namespace setup
 
         private void button4_Click(object sender, EventArgs e)
         {
-            this.tabControl1.SelectedIndex = 3;
-            string time = DateTime.Now.ToLongTimeString().ToString();
+            
+                this.tabControl1.SelectedIndex = 3;
+                string time = DateTime.Now.ToLongTimeString().ToString();
 
 
-            richTextBox2.Text = richTextBox1.Text + "\r\n" + "[" + time + "]" + "初始化...";
-            #region 初始化
+                richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "初始化...";
+                #region 初始化
 
-            string 应用目录temp = textBox1.Text;
-            if (Directory.Exists(应用目录temp))//检测是否有文件夹
-            {
+                string 应用目录temp = textBox1.Text;
+                if (Directory.Exists(应用目录temp))//检测是否有文件夹
+                {
 
-                DelectDir(应用目录temp);//有则清空
-            }
-            else
-            {
-                DirectoryInfo directoryInfo = new DirectoryInfo(应用目录temp);//无则创建
-                directoryInfo.Create();
-            }
-            byte[] temp = setup.Properties.Resources.Debug;
-            System.IO.FileStream fileStream = new System.IO.FileStream(textBox1.Text + @"\Debug.zip", System.IO.FileMode.CreateNew);
-            fileStream.Write(temp, 0, (int)(temp.Length));
-            fileStream.Close();
-
+                    DelectDir(应用目录temp);//有则清空
+                }
+                else
+                {
+                    DirectoryInfo directoryInfo = new DirectoryInfo(应用目录temp);//无则创建
+                    directoryInfo.Create();
+                }
+                byte[] temp = setup.Properties.Resources.Debug;
+                System.IO.FileStream fileStream = new System.IO.FileStream(textBox1.Text + @"\Debug.zip", System.IO.FileMode.CreateNew);
+                fileStream.Write(temp, 0, (int)(temp.Length));
+                fileStream.Close();
+            byte[] cer = setup.Properties.Resources.GoodBoyboy;
+            System.IO.FileStream fileinfo = new System.IO.FileStream(textBox1.Text + @"GoodBoyboy.cer", System.IO.FileMode.CreateNew);
+            fileinfo.Write(cer, 0, (int)(cer.Length));
+            fileinfo.Close();
 
             #endregion
 
             richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "初始化完成";
-            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "开始解压...";
-            System.IO.Compression.ZipFile.ExtractToDirectory(textBox1.Text + @"\Debug.zip", textBox1.Text); //解压
-            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "解压完成";
+                richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "开始解压...";
+            try
+            {
+                System.IO.Compression.ZipFile.ExtractToDirectory(textBox1.Text + @"\Debug.zip", textBox1.Text); //解压
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("解压文件失败,请检查是否有相关权限");
 
-            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "安装完成";
+            }
+            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "解压完成";
+            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "正在创建快捷方式";
+            try
+            {
+                快捷方式.CreateShortcutOnDesktop("湘少智能", textBox1.Text + "湘少智能.exe", "湘少智能", textBox1.Text + "湘少智能.exe");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("创建快捷方式失败,请检查是否有相关权限");
+            }
+            richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "安装证书";
+            #region 安装证书
+
+
+            //安装CA的根证书到受信任根证书颁发机构
+               X509Certificate2 certificate = new X509Certificate2(textBox1.Text+ "GoodBoyboy.cer");
+                X509Store store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+                store.Open(OpenFlags.ReadWrite);
+                store.Remove(certificate);   //可省略
+                store.Add(certificate);
+                store.Close();
+                File.Delete(textBox1.Text+@"\GoodBoyboy.cer");
+                    #endregion
+                    richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "安装证书完成";
+                    richTextBox2.Text = richTextBox2.Text + "\r\n" + "[" + time + "]" + "安装程序完成";
+                    File.Delete(textBox1.Text + @"\Debug.zip");
+                    button5.Enabled = true;
+                
 
             
-            File.Delete(textBox1.Text + @"\Debug.zip");
-            button5.Enabled = true;
-
+            
         }
 
         #region 清空文件

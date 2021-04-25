@@ -121,4 +121,7 @@
   <data name="Debug" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Debug.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="GoodBoyboy" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\GoodBoyboy_CA_Root.crt;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>
